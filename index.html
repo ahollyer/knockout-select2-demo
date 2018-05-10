@@ -3,27 +3,40 @@
 <head>
   <meta charset="utf-8">
   <title>KnockoutJS Select2 Demo</title>
-  <!-- Styles & Scripts -->
+  <!-- Bootstrap4 -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <!-- KnockoutJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
+  <!-- jQuery -->
+  <script
+    src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+  <!-- Select2 -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
 </head>
 <body>
-  <h1 class="text-center">KnockoutJS + Select2 Demo</h1>
+  <h1 class="text-center">Demos: KnockoutJS + Select2</h1>
+
   <!--***************************************************
             Single-Select + Two-Way Data Binding
   *****************************************************-->
   <div id="demo1" class="container">
     <hr/>
-    <h2>KnockoutJS: Two-Way Data Binding</h2>
-    <p>Two-way data binding with an observable array. Uses a regular HTML select element.</p>
-    <select data-bind="options: myOptions, optionsCaption: 'Make your choice...', value: selectedOption"></select>
+    <h2>KnockoutJS: Data Binding (Regular HTML Elements)</h2>
+    <p>Two-way data binding with an observable array.</p>
+    <select
+      data-bind="options: myOptions,
+                 optionsCaption: 'Make your choice...',
+                 value: selectedOption"></select>
     <p>You selected: <span class="text-primary" data-bind="text: selectedOption"></span></p>
     <script>
-      let viewModel1 = {
+      var viewModel1 = {
         myOptions: ko.observableArray(['Unicorn', 'Rainbow', 'Bubblegum']),
         selectedOption: ko.observable()
       };
-      let demo1 = document.getElementById('demo1');
+      var demo1 = document.getElementById('demo1');
       ko.applyBindings(viewModel1, demo1);
     </script>
     <hr/>
@@ -33,27 +46,144 @@
             Multi-Select + Two-Way Data Binding
   *****************************************************-->
   <div id="demo2" class="container">
-    <p>Same as above, but with a multi-select element.</p>
-    <select size="6"
-            onclick="logStuff()"
-            multiple="true"
-            data-bind="options: myOptions,
-                       selectedOptions: mySelectedOptions"></select>
+    <p>Same as above, but with a multi-select element. (Shift+click to select multiple options)</p>
+    <select
+      size="6"
+      multiple="true"
+      data-bind="options: myOptions,
+                 selectedOptions: mySelectedOptions"></select>
     <p>You selected:</p>
       <ul class="text-primary" data-bind="foreach: mySelectedOptions">
         <li data-bind="text: $data"></li>
       </ul>
     <script>
-      let viewModel2 = {
+      var viewModel2 = {
         myOptions: ko.observableArray(['Princess', 'Fairy', 'Bubblegum', 'Party', 'Magic', 'Puppies']),
         mySelectedOptions: ko.observableArray()
       };
 
-      let demo2 = document.getElementById('demo2');
+      var demo2 = document.getElementById('demo2');
       ko.applyBindings(viewModel2, demo2);
     </script>
     <hr/>
   </div><!-- #demo2 -->
+
+  <!--***************************************************
+        Select2 Multi-Select
+  *****************************************************-->
+  <div id="demo3" class="container">
+    <h2>Select2 Multi-Select Input (no Knockout)</h2>
+    <p>Basic Select2 multi-select component, hardcoded values, no KnockoutJS data binding.</p>
+    <select
+      class="select2-single-demo"
+      style="min-width: 250px"
+      name="choices[]"
+      multiple="multiple">
+      <option value="val1">Unicorn</option>
+      <option value="val2">Rainbow</option>
+      <option value="val3">Princess</option>
+      <option value="val4">Fairy</option>
+      <option value="val5">Bubblegum</option>
+      <option value="val6">Magic</option>
+    </select>
+    <script>
+      $(document).ready(function() {
+        $('.select2-single-demo').select2();
+      });
+    </script>
+    <hr/>
+  </div><!-- #demo3 -->
+
+  <!--***************************************************
+        Select2 Multi-Select w/ KnockoutJS
+  *****************************************************-->
+  <div class="container" id="demo4">
+    <h2>Select2 Single-Select + KnockoutJS</h2>
+    <p>Uses Select2 single-select component, KnockoutJS for two-way data binding. Also in this demo, the ObservableArray consists of complex objects rather than simply strings (see Select2 option value vs. "Selected:" display value).</p>
+    <select data-bind="value: selectedState, select2: { data: states, placeholder: 'Select a State', allowClear: true, formatResult: format }" class="select2" style="width: 200px"></select>
+    <p>Selected: <span class="text-primary" data-bind="text: selectedState"></span></p>
+  </div>
+
+<script>
+  ko.bindingHandlers.select2 = {
+    init: function(el, valueAccessor, allBindingsAccessor, viewModel) {
+      ko.utils.domNodeDisposal.addDisposeCallback(el, function() {
+        $(el).select2('destroy');
+      });
+      var allBindings = allBindingsAccessor()
+      var select2 = ko.utils.unwrapObservable(allBindings.select2);
+      $(el).select2(select2);
+    },
+    update: function (el, valueAccessor, allBindingsAccessor, viewModel) {
+      var allBindings = allBindingsAccessor();
+      if ("value" in allBindings) {
+        if ((allBindings.select2.multiple || el.multiple) && allBindings.value().constructor != Array) {
+          $(el).val(allBindings.value().split(',')).trigger('change');
+        } else {
+          $(el).val(allBindings.value()).trigger('change');
+        }
+      } else if ("selectedOptions" in allBindings) {
+        var converted = [];
+        var textAccessor = function(value) { return value; };
+        if ("optionsText" in allBindings) {
+          textAccessor = function(value) {
+            var valueAccessor = function (item) { return item; }
+            if ("optionsValue" in allBindings) {
+              valueAccessor = function (item) { return item[allBindings.optionsValue]; }
+            }
+            var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value});
+            if (items.length == 0 || items.length > 1) {
+              return "UNKNOWN";
+            }
+            return items[0][allBindings.optionsText];
+          }
+        }
+        $.each(allBindings.selectedOptions(), function (key, value) {
+          converted.push({id: value, text: textAccessor(value)});
+        });
+        $(el).select2("data", converted);
+      }
+      $(el).trigger("change");
+    }
+  };
+
+  function format(state) {
+    var originalOption = state.element;
+    return state.text.toUpperCase();
+  }
+
+  function State(id, text, children, disabled) {
+    this.id = id;
+    this.text = text;
+    this.disabled = disabled || false;
+    this.children = children;
+  }
+
+  function City(id,text,children,disabled) {
+    this.id = id;
+    this.text = text;
+    this.disabled = disabled || false;
+    this.children = children;
+  }
+
+  State.prototype.toString = City.prototype.toString = function() {
+    return this.text + "(" + this.id + ")";
+  };
+
+  var ViewModel = function () {
+    this.states = [
+      new State("AL", "Alabama",[],true),
+      new State("AK", "Alaska", [ new City("JU", "Juneau")]),
+      new State("AZ", "Arizona"),
+      new State("WV", "West Virginia"),
+      new State("WI", "Wisconsin"),
+      new State("WY", "Wyoming")
+    ];
+    this.selectedState = ko.observable("(none)");
+  };
+
+  ko.applyBindings(new ViewModel(), document.getElementById('demo4'));
+</script>
 
 
 
