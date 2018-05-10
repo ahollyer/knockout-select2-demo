@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <title>KnockoutJS Select2 Demo</title>
+  <!-- Styles & Scripts -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
+</head>
+<body>
+  <h1 class="text-center">KnockoutJS + Select2 Demo</h1>
+  <!--***************************************************
+            Single-Select + Two-Way Data Binding
+  *****************************************************-->
+  <div id="demo1" class="container">
+    <hr/>
+    <h2>KnockoutJS: Two-Way Data Binding</h2>
+    <p>Two-way data binding with an observable array. Uses a regular HTML select element.</p>
+    <select data-bind="options: myOptions, optionsCaption: 'Make your choice...', value: selectedOption"></select>
+    <p>You selected: <span class="text-primary" data-bind="text: selectedOption"></span></p>
+    <script>
+      let viewModel1 = {
+        myOptions: ko.observableArray(['Unicorn', 'Rainbow', 'Bubblegum']),
+        selectedOption: ko.observable()
+      };
+      let demo1 = document.getElementById('demo1');
+      ko.applyBindings(viewModel1, demo1);
+    </script>
+    <hr/>
+  </div><!-- #demo1 -->
+
+  <!--***************************************************
+            Multi-Select + Two-Way Data Binding
+  *****************************************************-->
+  <div id="demo2" class="container">
+    <p>Same as above, but with a multi-select element.</p>
+    <select size="6"
+            onclick="logStuff()"
+            multiple="true"
+            data-bind="options: myOptions,
+                       selectedOptions: mySelectedOptions"></select>
+    <p>You selected:</p>
+      <ul class="text-primary" data-bind="foreach: mySelectedOptions">
+        <li data-bind="text: $data"></li>
+      </ul>
+    <script>
+      let viewModel2 = {
+        myOptions: ko.observableArray(['Princess', 'Fairy', 'Bubblegum', 'Party', 'Magic', 'Puppies']),
+        mySelectedOptions: ko.observableArray()
+      };
+
+      let demo2 = document.getElementById('demo2');
+      ko.applyBindings(viewModel2, demo2);
+    </script>
+    <hr/>
+  </div><!-- #demo2 -->
+
+
+
+</body>
+</html>
