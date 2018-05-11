@@ -95,97 +95,190 @@
   </div><!-- #demo3 -->
 
   <!--***************************************************
-        Select2 Multi-Select w/ KnockoutJS
+        Select2 Single-Select w/ KnockoutJS
   *****************************************************-->
   <div class="container" id="demo4">
     <h2>Select2 Single-Select + KnockoutJS</h2>
-    <p>Uses Select2 single-select component, KnockoutJS for two-way data binding. Also in this demo, the ObservableArray consists of complex objects rather than simply strings (see Select2 option value vs. "Selected:" display value).</p>
-    <select data-bind="value: selectedState, select2: { data: states, placeholder: 'Select a State', allowClear: true, formatResult: format }" class="select2" style="width: 200px"></select>
-    <p>Selected: <span class="text-primary" data-bind="text: selectedState"></span></p>
+    <p>Uses Select2 single-select component, KnockoutJS for two-way data binding. Also in this demo, the ObservableArray consists of complex objects rather than simply strings.</p>
+    <select data-bind="value: selectedOption, select2: { data: options, placeholder: 'Select a Pink Thing', allowClear: true, formatResult: format }" class="select2" style="min-width: 200px"></select>
+    <p>Selected Pink Thing with ID: <span class="text-primary" data-bind="text: selectedOption"></span></p>
   </div>
 
-<script>
-  ko.bindingHandlers.select2 = {
-    init: function(el, valueAccessor, allBindingsAccessor, viewModel) {
-      ko.utils.domNodeDisposal.addDisposeCallback(el, function() {
-        $(el).select2('destroy');
-      });
-      var allBindings = allBindingsAccessor()
-      var select2 = ko.utils.unwrapObservable(allBindings.select2);
-      $(el).select2(select2);
-    },
-    update: function (el, valueAccessor, allBindingsAccessor, viewModel) {
-      var allBindings = allBindingsAccessor();
-      if ("value" in allBindings) {
-        if ((allBindings.select2.multiple || el.multiple) && allBindings.value().constructor != Array) {
-          $(el).val(allBindings.value().split(',')).trigger('change');
-        } else {
-          $(el).val(allBindings.value()).trigger('change');
-        }
-      } else if ("selectedOptions" in allBindings) {
-        var converted = [];
-        var textAccessor = function(value) { return value; };
-        if ("optionsText" in allBindings) {
-          textAccessor = function(value) {
-            var valueAccessor = function (item) { return item; }
-            if ("optionsValue" in allBindings) {
-              valueAccessor = function (item) { return item[allBindings.optionsValue]; }
-            }
-            var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value});
-            if (items.length == 0 || items.length > 1) {
-              return "UNKNOWN";
-            }
-            return items[0][allBindings.optionsText];
-          }
-        }
-        $.each(allBindings.selectedOptions(), function (key, value) {
-          converted.push({id: value, text: textAccessor(value)});
+  <script>
+    ko.bindingHandlers.select2 = {
+      init: function(el, valueAccessor, allBindingsAccessor, viewModel) {
+        ko.utils.domNodeDisposal.addDisposeCallback(el, function() {
+          $(el).select2('destroy');
         });
-        $(el).select2("data", converted);
+        var allBindings = allBindingsAccessor()
+        var select2 = ko.utils.unwrapObservable(allBindings.select2);
+        $(el).select2(select2);
+      },
+      update: function (el, valueAccessor, allBindingsAccessor, viewModel) {
+        var allBindings = allBindingsAccessor();
+        if ("value" in allBindings) {
+          if ((allBindings.select2.multiple || el.multiple) && allBindings.value().constructor != Array) {
+            $(el).val(allBindings.value().split(',')).trigger('change');
+          } else {
+            $(el).val(allBindings.value()).trigger('change');
+          }
+        } else if ("selectedOptions" in allBindings) {
+          var converted = [];
+          var textAccessor = function(value) { return value; };
+          if ("optionsText" in allBindings) {
+            textAccessor = function(value) {
+              var valueAccessor = function (item) { return item; }
+              if ("optionsValue" in allBindings) {
+                valueAccessor = function (item) { return item[allBindings.optionsValue]; }
+              }
+              var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value});
+              if (items.length == 0 || items.length > 1) {
+                return "UNKNOWN";
+              }
+              return items[0][allBindings.optionsText];
+            }
+          }
+          $.each(allBindings.selectedOptions(), function (key, value) {
+            converted.push({id: value, text: textAccessor(value)});
+          });
+          $(el).select2("data", converted);
+        }
+        $(el).trigger("change");
       }
-      $(el).trigger("change");
+    };
+
+    function format(option) {
+      var originalOption = option.element;
+      return option.text.toUpperCase();
     }
-  };
 
-  function format(state) {
-    var originalOption = state.element;
-    return state.text.toUpperCase();
-  }
+    function PinkThing(id, text, disabled) {
+      this.id = id;
+      this.text = text;
+      this.disabled = disabled || false;
+    }
 
-  function State(id, text, children, disabled) {
-    this.id = id;
-    this.text = text;
-    this.disabled = disabled || false;
-    this.children = children;
-  }
+    PinkThing.prototype.toString = function() {
+      return this.text + "(" + this.id + ")";
+    };
 
-  function City(id,text,children,disabled) {
-    this.id = id;
-    this.text = text;
-    this.disabled = disabled || false;
-    this.children = children;
-  }
+    var ViewModel = function () {
+      this.options = [
+        new PinkThing("pink_thing_id1", "Unicorn",true),
+        new PinkThing("pink_thing_id2", "Unikitty"),
+        new PinkThing("pink_thing_id3", "Cotton Candy"),
+        new PinkThing("pink_thing_id4", "Bubble Gum"),
+        new PinkThing("pink_thing_id5", "Glitter"),
+        new PinkThing("pink_thing_id6", "Magic Potion")
+      ];
+      this.selectedOption = ko.observable("(none)");
+    };
 
-  State.prototype.toString = City.prototype.toString = function() {
-    return this.text + "(" + this.id + ")";
-  };
+    ko.applyBindings(new ViewModel(), document.getElementById('demo4'));
+  </script>
 
-  var ViewModel = function () {
-    this.states = [
-      new State("AL", "Alabama",[],true),
-      new State("AK", "Alaska", [ new City("JU", "Juneau")]),
-      new State("AZ", "Arizona"),
-      new State("WV", "West Virginia"),
-      new State("WI", "Wisconsin"),
-      new State("WY", "Wyoming")
-    ];
-    this.selectedState = ko.observable("(none)");
-  };
+  <!--***************************************************
+        Select2 Multi-Select w/ KnockoutJS
+  *****************************************************-->
+  <div class="container" id="demo5">
+    <h2>Select2 Multi-Select + KnockoutJS</h2>
+    <p>Same as above, but with Select2 multi-select component.</p>
+    <select data-bind="select2 : {}, select2Options : options, selectedOptions : selectedOptions" style="min-width: 300px" multiple="multiple">
+    </select>
+    <p>Selected Pink Things with ID:
+    <ul class="text-primary" data-bind="foreach: selectedOptions">
+      <li data-bind="text: $data"></li>
+    </ul>
+  </div>
 
-  ko.applyBindings(new ViewModel(), document.getElementById('demo4'));
-</script>
+  <script>
+    ko.bindingHandlers.select2Options = {
+      update: (element, valueAccessor, allBindingsAccessor, viewModel) => {
+        var allBindings = allBindingsAccessor();
 
+        $(element).select2("destroy");
+        // see https://github.com/select2/select2/issues/2830
+        $(element).html("<option></option>");
 
+        // change selection when options change
+        $(element).select2({
+          "data": ko.utils.unwrapObservable(valueAccessor())
+        });
+      }
+    }
 
+    /* viewModel => select2 binding */
+    ko.bindingHandlers.select2 = {
+      init: (element, valueAccessor, allBindingsAccessor, viewModel) => {
+        // add destroy callback
+        ko.utils.domNodeDisposal.addDisposeCallback(element, () => {
+          $(element).select2('destroy');
+        });
+
+        $(element).select2();
+      },
+      update: (element, valueAccessor, allBindingsAccessor, viewModel) => {
+        var allBindings = allBindingsAccessor();
+
+        if (allBindings["value"]) {
+          // the value changed
+          const value = ko.utils.unwrapObservable(allBindings.value());
+          $(element).val(value).trigger("change");
+        } else if (allBindings["selectedOptions"]){
+          // the selected options changed
+          const value = ko.utils.unwrapObservable(allBindings.selectedOptions());
+          $(element).val(value).trigger("change");
+        }
+      }
+    };
+
+    const options = [{
+      id: 'pink_thing_id1',
+      text: 'sprinkles'
+      }, {
+      id: 'pink_thing_id2',
+      text: 'glitter'
+      }, {
+      text: 'big daddy pink',
+      children: [{
+        id: 'pink_baby_thing_id1',
+        text: 'pinkbaby'
+      }]
+    }];
+
+    const obsOptions = ko.observableArray(options);
+    const value = ko.observable();
+    const selectedOptions = ko.observableArray();
+
+    selectedOptions.subscribe(v => {
+      console.log(v);
+    });
+
+    ko.applyBindings(
+      {
+        options: obsOptions,
+        value: value,
+        changeOptions: function() {
+          obsOptions([
+            { id: 'value10', text: 'value10' },
+            { id: 'value2', text: 'value2' }
+          ]);
+        },
+        changeValue : function() {
+          value("value2")
+        },
+        selectedOptions : selectedOptions
+      },
+      document.getElementById('demo5') // apply bindings only within this context
+    );
+  </script>
+  
+  <!--***************************************************
+        Select2 Multi-Select w/ AJAX
+  *****************************************************-->
+
+  <!--***************************************************
+        Select2 Multi-Select w/ AJAX + KnockoutJS
+  *****************************************************-->
 </body>
 </html>
